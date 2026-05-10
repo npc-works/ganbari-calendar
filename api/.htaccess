@@ -1,0 +1,19 @@
+# API ディレクトリ アクセス制御
+# notify.php 以外のファイル（config・kill-switch・vendor・data）への直接アクセスを拒否
+
+<IfModule mod_authz_core.c>
+    # config・kill-switch・json・envファイルは絶対に外から見せない
+    <FilesMatch "^(config\.php|config\.php\.example|kill-switch|.*\.json|.*\.env)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^(config\.php|config\.php\.example|kill-switch|.*\.json|.*\.env)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+# data/ ディレクトリ配下も全部拒否（レート制限の状態ファイル等）
+RedirectMatch 403 ^/ganbari-calendar/api/data/.*

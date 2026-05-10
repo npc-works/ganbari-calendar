@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>がんばりカレンダー</title>
+<meta name="description" content="毎日のがんばりを記録するカレンダー">
+<meta name="theme-color" content="#6C63FF">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="がんばり">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --primary:#6C63FF; --primary-dark:#5A52D5; --success:#4CAF50;
+  --warning:#FF9800; --danger:#F44336; --bg:#F5F7FA; --card:#FFF;
+  --text:#333; --text-light:#888; --border:#E0E0E0;
+}
+body {
+  font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN','Hiragino Sans',sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh; user-select:none;
+}
+.hidden { display:none!important; }
+
+/* Setup */
+#setup {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+}
+.setup-box {
+  background:var(--card); border-radius:20px; padding:40px; text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.1); width:400px;
+}
+.setup-box h1 { font-size:28px; color:var(--primary); margin-bottom:8px; }
+.setup-box p { color:var(--text-light); margin-bottom:20px; }
+.setup-box label { display:block; text-align:left; font-weight:600; font-size:14px; margin-bottom:4px; margin-top:12px; }
+.setup-box input[type=text] {
+  width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:10px;
+  font-size:18px; outline:none;
+}
+.setup-box input:focus { border-color:var(--primary); }
+.hint { font-size:11px; color:var(--text-light); text-align:left; margin-top:2px; }
+.pw-setup { font-size:24px; text-align:center; letter-spacing:8px; }
+.btn-primary {
+  display:inline-block; padding:12px 24px; background:var(--primary); color:#fff; border:none;
+  border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; margin-top:16px; width:100%;
+}
+.btn-primary:hover { background:var(--primary-dark); }
+
+/* App */
+.titlebar {
+  height:52px; display:flex; align-items:center; justify-content:space-between;
+  background:var(--card); border-bottom:1px solid var(--border); padding:0 20px;
+}
+.titlebar-left { width:40px; }
+.app-title { font-size:16px; font-weight:700; }
+.settings-btn {
+  width:36px; height:36px; border:1px solid var(--border); border-radius:8px;
+  background:var(--card); font-size:18px; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; transition:background .2s;
+}
+.settings-btn:hover { background:var(--bg); }
+.child-selector {
+  padding:4px 10px; border:2px solid var(--primary); border-radius:8px;
+  font-size:14px; font-weight:600; background:var(--card); color:var(--primary);
+  cursor:pointer; outline:none;
+}
+.child-tabs {
+  display:flex; gap:0; background:var(--card); border-bottom:1px solid var(--border);
+  padding:0 20px; overflow-x:auto;
+}
+.child-tab {
+  padding:10px 20px; border:none; background:none; font-size:14px; font-weight:600;
+  color:var(--text-light); cursor:pointer; border-bottom:3px solid transparent;
+  white-space:nowrap; transition:all .2s;
+}
+.child-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+.child-tab:hover { color:var(--text); }
+
+/* Status */
+.status-bar {
+  display:flex; gap:12px; padding:14px 20px; background:var(--card);
+  border-bottom:1px solid var(--border); justify-content:center; flex-wrap:wrap;
+}
+.status-item {
+  display:flex; flex-direction:column; align-items:center;
+  padding:8px 18px; border-radius:12px; background:var(--bg); min-width:90px;
+}
+.status-label { font-size:11px; color:var(--text-light); margin-bottom:2px; }
+.status-value { font-size:20px; font-weight:700; }
+.s-earned { color:var(--success); }
+.s-used { color:var(--warning); }
+.s-remain { color:var(--primary); }
+.s-money { color:#E91E63; }
+.exchange-btn {
+  margin-top:4px; padding:4px 12px; background:#E91E63; color:#fff; border:none;
+  border-radius:6px; font-size:11px; cursor:pointer;
+}
+
+/* Backup bar */
+.backup-bar {
+  display:flex; gap:8px; padding:10px 20px; justify-content:center; flex-wrap:wrap;
+  background:var(--card); border-bottom:1px solid var(--border);
+}
+.backup-btn {
+  padding:8px 16px; border:1px solid var(--border); border-radius:8px;
+  background:var(--bg); font-size:13px; font-weight:600; cursor:pointer;
+  display:flex; align-items:center; gap:4px;
+}
+.backup-btn:hover { background:#E8E8E8; }
+.backup-btn.export { color:#2196F3; border-color:#2196F3; }
+.backup-btn.import { color:#4CAF50; border-color:#4CAF50; }
+.backup-reminder {
+  background:#FFF3E0; color:#E65100; padding:10px 20px; font-size:13px;
+  font-weight:600; text-align:center; border-bottom:1px solid #FFE0B2;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.backup-reminder button {
+  padding:4px 12px; background:#E65100; color:#fff; border:none;
+  border-radius:6px; font-size:12px; cursor:pointer;
+}
+.backup-reminder .dismiss {
+  background:transparent; color:#E65100; border:1px solid #E65100;
+}
+
+/* Calendar */
+.cal-wrap { padding:16px 20px; }
+.cal-header { display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:14px; }
+.cal-header h2 { font-size:20px; min-width:140px; text-align:center; }
+.nav-btn {
+  width:36px; height:36px; border:1px solid var(--border); border-radius:8px;
+  background:var(--card); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+.nav-btn:hover { background:var(--bg); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.dh { text-align:center; font-size:12px; font-weight:600; padding:6px 0; color:var(--text-light); }
+.dh.sun { color:var(--danger); } .dh.sat { color:#2196F3; }
+.day {
+  border:1px solid var(--border); border-radius:10px; padding:4px 2px; cursor:pointer;
+  background:var(--card); display:flex; flex-direction:column; align-items:center;
+  min-height:90px; transition:all .15s;
+}
+.day:hover { border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); }
+.day.empty { background:transparent; border-color:transparent; cursor:default; }
+.day.empty:hover { border-color:transparent; box-shadow:none; }
+.day.today { border-color:var(--primary); background:#F0EEFF; }
+.day.has-rec { background:#F0FFF0; }
+.day.sun .dn { color:var(--danger); } .day.sat .dn { color:#2196F3; }
+.dn { font-size:14px; font-weight:600; margin-bottom:2px; }
+.di { display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin-top:1px; }
+.di span {
+  padding:2px 5px; border-radius:4px; font-size:11px; color:#fff; font-weight:700;
+  line-height:1.4; white-space:nowrap;
+}
+
+/* Modal */
+.modal {
+  position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.4);
+  display:flex; align-items:center; justify-content:center; z-index:100;
+}
+.modal-box {
+  background:var(--card); border-radius:16px; width:440px; max-height:90vh;
+  overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.2);
+}
+.modal-box.small { width:320px; }
+.mh {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; border-bottom:1px solid var(--border);
+}
+.mh h3 { font-size:18px; }
+.close-btn {
+  width:32px; height:32px; border:none; background:var(--bg); border-radius:8px;
+  font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+.mb { padding:20px; }
+.mf { padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+.locked-banner {
+  background:#FFF3E0; color:#E65100; padding:10px 20px; font-size:13px;
+  font-weight:600; text-align:center; border-bottom:1px solid #FFE0B2;
+}
+
+/* Record rows */
+.rr { display:flex; align-items:center; padding:10px 0; }
+.rr.locked .toggle, .rr.locked .sinput { pointer-events:none; opacity:.6; }
+.rl { flex:0 0 130px; font-size:15px; font-weight:600; }
+.ri { flex:1; display:flex; align-items:center; gap:8px; }
+.toggle {
+  width:40px; height:40px; border:2px solid var(--border); border-radius:50%;
+  background:var(--card); font-size:20px; cursor:pointer; color:var(--border); transition:all .2s;
+}
+.toggle.on { background:var(--primary); border-color:var(--primary); color:#fff; }
+.sinput {
+  width:100px; padding:8px 12px; border:2px solid var(--border); border-radius:8px;
+  font-size:18px; text-align:center; outline:none;
+}
+.sinput:focus { border-color:var(--primary); }
+.sinput:disabled { background:#F5F5F5; color:#CCC; }
+.thint { font-size:12px; color:var(--success); font-weight:600; }
+.lock-msg { font-size:12px; color:var(--danger); margin-top:4px; width:100%; }
+.game-locked .ri { opacity:.4; pointer-events:none; }
+hr { border:none; border-top:1px solid var(--border); margin:4px 0; }
+
+.btn-edit {
+  padding:12px 28px; background:var(--warning); color:#fff; border:none; border-radius:10px;
+  font-size:16px; font-weight:700; cursor:pointer; width:100%;
+}
+.btn-edit:hover { background:#E68900; }
+.btn-cancel {
+  padding:10px 20px; background:var(--bg); color:var(--text); border:1px solid var(--border);
+  border-radius:10px; font-size:14px; cursor:pointer;
+}
+
+/* Game add */
+.game-add {
+  margin-top:8px; padding:12px 16px; background:#FFF8E1; border-radius:10px;
+  border:1px solid #FFE082;
+}
+.game-add .ga-label { font-size:13px; font-weight:600; color:#F57F17; margin-bottom:6px; }
+.ga-row { display:flex; align-items:center; gap:8px; }
+.btn-ga {
+  padding:8px 16px; background:var(--warning); color:#fff; border:none; border-radius:8px;
+  font-size:14px; font-weight:600; cursor:pointer;
+}
+.btn-ga:hover { background:#E68900; }
+
+/* Settings */
+.cfg-row { display:flex; align-items:center; padding:8px 0; gap:8px; }
+.cfg-label { flex:1; font-size:14px; font-weight:600; }
+.cfg-input {
+  width:110px; padding:8px 10px; border:2px solid var(--border); border-radius:8px;
+  font-size:16px; text-align:center; outline:none;
+}
+.cfg-name-input {
+  flex:1; min-width:0; padding:8px 12px; border:2px solid var(--border); border-radius:8px;
+  font-size:15px; outline:none;
+}
+.cfg-unit-select {
+  padding:6px 8px; border:2px solid var(--border); border-radius:8px;
+  font-size:14px; outline:none; background:var(--card);
+}
+.cfg-unit-select:focus { border-color:var(--primary); }
+.cfg-input:focus, .cfg-name-input:focus { border-color:var(--primary); }
+.cfg-unit { font-size:13px; color:var(--text-light); }
+.cfg-section { font-size:12px; color:var(--text-light); margin-top:12px; margin-bottom:4px; font-weight:600; }
+.btn-add-item {
+  padding:6px 14px; background:var(--success); color:#fff; border:none; border-radius:8px;
+  font-size:13px; font-weight:600; cursor:pointer; margin-top:4px;
+}
+.btn-add-item:hover { opacity:.9; }
+.btn-del-item {
+  width:28px; height:28px; border:none; background:var(--danger); color:#fff; border-radius:6px;
+  font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+/* Child management in settings */
+.child-cfg-row {
+  display:flex; align-items:center; gap:8px; padding:6px 0;
+}
+.child-cfg-row .cfg-name-input { flex:1; }
+.child-cfg-row .active-badge {
+  font-size:11px; color:var(--primary); font-weight:600; white-space:nowrap;
+}
+
+/* PW */
+.pw-input {
+  width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:10px;
+  font-size:24px; text-align:center; letter-spacing:8px; outline:none;
+}
+.pw-input:focus { border-color:var(--primary); }
+.pw-err { color:var(--danger); font-size:13px; text-align:center; margin-top:8px; }
+
+@media(max-width:600px) {
+  .setup-box { width:90%; padding:24px; }
+  .modal-box { width:95%; }
+  .cal-wrap { padding:10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup">
+  <div class="setup-box">
+    <h1>がんばりカレンダー</h1>
+    <p>はじめに設定してね</p>
+    <label>なまえ</label>
+    <input type="text" id="s-name" placeholder="なまえを入れてね">
+    <label>編集パスワード（4けたの数字）</label>
+    <input type="text" id="s-pw" class="pw-setup" placeholder="0925" maxlength="4" inputmode="numeric">
+    <p class="hint">子供がかってに編集できないようにするパスワードだよ（未入力なら0925）</p>
+    <button class="btn-primary" onclick="finishSetup()">はじめる</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <div class="titlebar">
+    <div class="titlebar-left"></div>
+    <span class="app-title" id="app-title">がんばりカレンダー</span>
+    <button class="settings-btn" onclick="openSettings()" title="せってい">&#9881;</button>
+  </div>
+  <div id="child-tabs" class="child-tabs hidden"></div>
+  <div class="status-bar">
+    <div class="status-item"><span class="status-label">たまった時間</span><span class="status-value s-earned" id="st-earned">0分</span></div>
+    <div class="status-item"><span class="status-label">つかった時間</span><span class="status-value s-used" id="st-used">0分</span></div>
+    <div class="status-item"><span class="status-label">のこり</span><span class="status-value s-remain" id="st-remain">0分</span></div>
+    <div class="status-item">
+      <span class="status-label">こうかん</span><span class="status-value s-money" id="st-money">0円</span>
+      <button class="exchange-btn hidden" id="ex-btn" onclick="openExchange()">こうかんする</button>
+    </div>
+  </div>
+  <div id="backup-reminder" class="backup-reminder hidden">
+    バックアップしてから <span id="backup-days">0</span>日 たっているよ
+    <button onclick="exportData()">バックアップする</button>
+    <button class="dismiss" onclick="dismissReminder()">あとで</button>
+  </div>
+
+  <div class="backup-bar">
+    <button class="backup-btn export" onclick="exportData()">&#128190; バックアップ（書き出し）</button>
+    <button class="backup-btn import" onclick="document.getElementById('import-file').click()">&#128194; ふっかつ（読みこみ）</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+
+  <div class="cal-wrap">
+    <div class="cal-header">
+      <button class="nav-btn" onclick="changeMonth(-1)">&lt;</button>
+      <h2 id="cal-title"></h2>
+      <button class="nav-btn" onclick="changeMonth(1)">&gt;</button>
+    </div>
+    <div class="cal-grid">
+      <div class="dh sun">日</div><div class="dh">月</div><div class="dh">火</div>
+      <div class="dh">水</div><div class="dh">木</div><div class="dh">金</div><div class="dh sat">土</div>
+      <div id="cal-days" style="display:contents"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY MODAL (built dynamically) -->
+<div id="day-modal" class="modal hidden" onclick="if(event.target===this)closeDay()">
+  <div class="modal-box">
+    <div class="mh"><h3 id="m-date"></h3><button class="close-btn" onclick="closeDay()">&times;</button></div>
+    <div id="lock-banner" class="locked-banner hidden">ほぞんずみ ー 下の「へんしゅうする」ボタンをおしてね</div>
+    <div class="mb" id="day-body"></div>
+    <div class="mf">
+      <button class="btn-primary" id="save-btn" onclick="saveDay()">ほぞん</button>
+      <button class="btn-edit hidden" id="edit-btn" onclick="openPw()">へんしゅうする</button>
+    </div>
+  </div>
+</div>
+
+<!-- PW MODAL -->
+<div id="pw-modal" class="modal hidden" onclick="if(event.target===this)closePw()">
+  <div class="modal-box small">
+    <div class="mh"><h3>パスワード</h3><button class="close-btn" onclick="closePw()">&times;</button></div>
+    <div class="mb">
+      <input type="password" id="pw-in" class="pw-input" placeholder="パスワードをいれてね" onkeydown="if(event.key==='Enter')checkPw()">
+      <p id="pw-err" class="pw-err hidden">パスワードがちがうよ</p>
+    </div>
+    <div class="mf"><button class="btn-primary" onclick="checkPw()">OK</button></div>
+  </div>
+</div>
+
+<!-- EXCHANGE MODAL -->
+<div id="ex-modal" class="modal hidden" onclick="if(event.target===this)closeEx()">
+  <div class="modal-box small">
+    <div class="mh"><h3>こうかん</h3><button class="close-btn" onclick="closeEx()">&times;</button></div>
+    <div class="mb">
+      <p id="ex-rate"></p>
+      <p>いまのこり: <strong id="ex-rem">0</strong>分</p>
+      <p>こうかんできる: <strong id="ex-amt">0</strong>円</p>
+      <p>いままでこうかんした: <strong id="ex-tot">0</strong>円</p>
+    </div>
+    <div class="mf">
+      <button class="btn-primary" onclick="doExchange()">こうかんする！</button>
+      <button class="btn-cancel" onclick="closeEx()">やめる</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PW -->
+<div id="cfg-pw-modal" class="modal hidden" onclick="if(event.target===this)closeCfgPw()">
+  <div class="modal-box small">
+    <div class="mh"><h3>せっていパスワード</h3><button class="close-btn" onclick="closeCfgPw()">&times;</button></div>
+    <div class="mb">
+      <input type="password" id="cfg-pw-in" class="pw-input" placeholder="パスワードをいれてね" onkeydown="if(event.key==='Enter')checkCfgPw()">
+      <p id="cfg-pw-err" class="pw-err hidden">パスワードがちがうよ</p>
+    </div>
+    <div class="mf"><button class="btn-primary" onclick="checkCfgPw()">OK</button></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="cfg-modal" class="modal hidden" onclick="if(event.target===this)closeCfg()">
+  <div class="modal-box">
+    <div class="mh"><h3>せってい</h3><button class="close-btn" onclick="closeCfg()">&times;</button></div>
+    <div class="mb" id="cfg-body"></div>
+    <div class="mf"><button class="btn-primary" onclick="saveCfg()">ほぞん</button></div>
+  </div>
+</div>
+
+<!-- 本番環境のみ存在: APIエンドポイントとトークン設定（GitHubには含まれない） -->
+<script src="config.local.js" onerror="window.__gcNoConfig=true"></script>
+<script>
+// ========== COLOR PALETTE ==========
+const CHECK_COLORS = ['#9C27B0','#2196F3','#E91E63','#00BCD4','#795548'];
+const SHEET_COLORS = ['#4CAF50','#FF5722','#009688','#3F51B5','#FF9800','#607D8B'];
+
+// ========== DEFAULT ITEMS ==========
+const DEFAULT_CHECKS = [
+  {id:'c0', name:'ピアノ'},
+  {id:'c1', name:'学校のしゅくだい'}
+];
+const DEFAULT_SHEETS = [
+  {id:'s0', name:'国語', min:10, unit:'まい'},
+  {id:'s1', name:'算数', min:10, unit:'まい'},
+  {id:'s2', name:'英語', min:10, unit:'まい'}
+];
+const UNIT_OPTIONS = ['まい','個','セット','回','ページ','冊'];
+
+// ========== STATE ==========
+let settings = JSON.parse(localStorage.getItem('gc-settings'));
+let data = { days:{}, exchanged:0 };
+let curY, curM, selDate, editing=false;
+let activeChildIdx = 0;
+
+function getChildren() { return (settings && settings.children) || [settings ? settings.name : '']; }
+function getActiveChild() { return getChildren()[activeChildIdx] || getChildren()[0]; }
+function getChecks() { return (settings && settings.checks) || DEFAULT_CHECKS; }
+function getSheets() { return (settings && settings.sheets) || DEFAULT_SHEETS; }
+function cfgExMin() { return (settings && settings.exMin) || 1000; }
+function cfgExYen() { return (settings && settings.exYen) || 1000; }
+
+// Data key per child
+function dataKey(childName) { return 'gc-data-' + (childName || getActiveChild()); }
+function loadChildData() {
+  data = JSON.parse(localStorage.getItem(dataKey())) || { days:{}, exchanged:0 };
+}
+
+// ========== MIGRATE ==========
+function migrateSettings() {
+  if (!settings) return;
+  // Migrate single-child to children array
+  if (!settings.children) {
+    settings.children = [settings.name];
+    // Move gc-data to gc-data-{name}
+    const old = localStorage.getItem('gc-data');
+    if (old) {
+      localStorage.setItem(dataKey(settings.name), old);
+      localStorage.removeItem('gc-data');
+    }
+    localStorage.setItem('gc-settings', JSON.stringify(settings));
+  }
+}
+function migrateRecordFormat(d) {
+  if (!d.days) return false;
+  let migrated = false;
+  Object.keys(d.days).forEach(dk => {
+    const r = d.days[dk];
+    if (r.checks || r.sheets) return;
+    if (r.piano === undefined && r.ko === undefined) return;
+    const nr = { checks:{}, sheets:{}, gm: r.gm||0 };
+    if (r.piano) nr.checks['c0'] = true;
+    if (r.hw) nr.checks['c1'] = true;
+    if (r.ko) nr.sheets['s0'] = r.ko;
+    if (r.sa) nr.sheets['s1'] = r.sa;
+    if (r.ei) nr.sheets['s2'] = r.ei;
+    d.days[dk] = nr;
+    migrated = true;
+  });
+  return migrated;
+}
+
+// ========== SETUP ==========
+if (settings) {
+  migrateSettings();
+  activeChildIdx = 0;
+  loadChildData();
+  if (migrateRecordFormat(data)) save();
+  startApp();
+} else {
+  document.getElementById('setup').classList.remove('hidden');
+}
+
+function finishSetup() {
+  const name = document.getElementById('s-name').value.trim();
+  if (!name) { document.getElementById('s-name').style.borderColor='#F44336'; return; }
+  let pw = document.getElementById('s-pw').value.trim();
+  if (!pw) pw = '0925';
+  if (!/^\d{4}$/.test(pw)) { document.getElementById('s-pw').style.borderColor='#F44336'; return; }
+  settings = {
+    name, password: pw,
+    children: [name],
+    checks: DEFAULT_CHECKS.slice(),
+    sheets: DEFAULT_SHEETS.slice()
+  };
+  localStorage.setItem('gc-settings', JSON.stringify(settings));
+  activeChildIdx = 0;
+  loadChildData();
+  startApp();
+}
+
+function startApp() {
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderChildTabs();
+  updateTitle();
+  const now = new Date(); curY = now.getFullYear(); curM = now.getMonth();
+  render(); updateStatus();
+}
+
+function updateTitle() {
+  document.getElementById('app-title').textContent = getActiveChild() + 'のがんばりカレンダー';
+}
+
+function renderChildTabs() {
+  const children = getChildren();
+  const el = document.getElementById('child-tabs');
+  if (children.length <= 1) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  el.innerHTML = '';
+  children.forEach((name, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'child-tab' + (i === activeChildIdx ? ' active' : '');
+    btn.textContent = name;
+    btn.onclick = () => switchChild(i);
+    el.appendChild(btn);
+  });
+}
+
+function switchChild(idx) {
+  activeChildIdx = idx;
+  loadChildData();
+  renderChildTabs();
+  updateTitle();
+  render();
+  updateStatus();
+}
+
+// ========== CALENDAR ==========
+function changeMonth(d) { curM+=d; if(curM<0){curM=11;curY--;}if(curM>11){curM=0;curY++;} render(); }
+
+function render() {
+  document.getElementById('cal-title').textContent = curY+'年'+(curM+1)+'月';
+  const el = document.getElementById('cal-days');
+  el.innerHTML = '';
+  const first = new Date(curY,curM,1).getDay();
+  const dim = new Date(curY,curM+1,0).getDate();
+  const today = new Date();
+  const checks = getChecks(), sheets = getSheets();
+
+  for(let i=0;i<first;i++) { const c=document.createElement('div'); c.className='day empty'; el.appendChild(c); }
+  for(let d=1;d<=dim;d++) {
+    const c = document.createElement('div');
+    const dk = curY+'-'+String(curM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dow = new Date(curY,curM,d).getDay();
+    const rec = data.days[dk];
+    let cls = 'day';
+    if(dow===0) cls+=' sun'; if(dow===6) cls+=' sat';
+    if(today.getFullYear()===curY && today.getMonth()===curM && today.getDate()===d) cls+=' today';
+    if(rec) cls+=' has-rec';
+    c.className = cls;
+    let html = '<div class="dn">'+d+'</div>';
+    if(rec) {
+      html += '<div class="di">';
+      checks.forEach((ck,i) => {
+        if(rec.checks && rec.checks[ck.id]) {
+          const col = CHECK_COLORS[i % CHECK_COLORS.length];
+          html += '<span style="background:'+col+'">'+ck.name.slice(0,3)+'</span>';
+        }
+      });
+      sheets.forEach((sh,i) => {
+        const v = (rec.sheets && rec.sheets[sh.id]) || 0;
+        if(v > 0) {
+          const col = SHEET_COLORS[i % SHEET_COLORS.length];
+          html += '<span style="background:'+col+'">'+sh.name.charAt(0)+v+'</span>';
+        }
+      });
+      if(rec.gm > 0) html += '<span style="background:var(--warning)">'+rec.gm+'分</span>';
+      html += '</div>';
+    }
+    c.innerHTML = html;
+    c.onclick = () => openDay(dk, d);
+    el.appendChild(c);
+  }
+}
+
+// ========== DAY MODAL (dynamic) ==========
+function buildDayBody(rec) {
+  const checks = getChecks(), sheets = getSheets();
+  let html = '';
+  // Check items
+  checks.forEach(ck => {
+    const on = (rec.checks && rec.checks[ck.id]) ? ' on' : '';
+    html += '<div class="rr" data-type="check" data-id="'+ck.id+'"><span class="rl">'+ck.name+'</span>';
+    html += '<div class="ri"><button class="toggle'+on+'" onclick="togBtn(this)">●</button></div></div>';
+  });
+  html += '<hr>';
+  // Sheet items
+  sheets.forEach(sh => {
+    const v = (rec.sheets && rec.sheets[sh.id]) || 0;
+    html += '<div class="rr" data-type="sheet" data-id="'+sh.id+'"><span class="rl">'+sh.name+'</span>';
+    const unit = sh.unit || 'まい';
+    html += '<div class="ri"><input type="number" class="sinput" min="0" value="'+v+'" oninput="updateHints()"> '+unit+' ';
+    html += '<span class="thint">= '+v*sh.min+'分</span></div></div>';
+  });
+  html += '<hr>';
+  // Game
+  html += '<div class="rr" id="game-row"><span class="rl">ゲーム</span>';
+  html += '<div class="ri"><input type="number" class="sinput" id="i-gm" min="0" value="'+(rec.gm||0)+'"> 分</div>';
+  html += '<div id="gm-lock" class="lock-msg hidden">必須項目をやってからだよ！</div></div>';
+  // Game add
+  html += '<div id="game-add" class="game-add hidden">';
+  html += '<div class="ga-label">ゲーム時間をついかする</div>';
+  html += '<div class="ga-row"><input type="number" class="sinput" id="i-gm-add" min="1" value="" placeholder="0">';
+  html += ' <span>分</span> <button class="btn-ga" onclick="addGameTime()">ついか</button></div></div>';
+  return html;
+}
+
+function openDay(dk, d) {
+  selDate = dk; editing = false;
+  const rec = data.days[dk] || { checks:{}, sheets:{}, gm:0 };
+  const has = !!data.days[dk];
+  document.getElementById('m-date').textContent = (curM+1)+'月'+d+'日';
+  document.getElementById('day-body').innerHTML = buildDayBody(rec);
+  updateHints(); updateGameLock();
+  if(has) {
+    lockAll(true);
+    document.getElementById('save-btn').classList.add('hidden');
+    document.getElementById('edit-btn').classList.remove('hidden');
+    document.getElementById('lock-banner').classList.remove('hidden');
+    document.getElementById('game-add').classList.toggle('hidden', !allChecksDone());
+  } else {
+    lockAll(false);
+    document.getElementById('save-btn').classList.remove('hidden');
+    document.getElementById('edit-btn').classList.add('hidden');
+    document.getElementById('lock-banner').classList.add('hidden');
+    document.getElementById('game-add').classList.add('hidden');
+  }
+  document.getElementById('day-modal').classList.remove('hidden');
+}
+function closeDay() { document.getElementById('day-modal').classList.add('hidden'); }
+
+function lockAll(on) {
+  document.querySelectorAll('#day-body .rr').forEach(r => r.classList.toggle('locked', on));
+}
+
+function togBtn(btn) { btn.classList.toggle('on'); updateGameLock(); }
+
+function allChecksDone() {
+  let all = true;
+  document.querySelectorAll('#day-body .rr[data-type="check"]').forEach(r => {
+    if (!r.querySelector('.toggle').classList.contains('on')) all = false;
+  });
+  return all;
+}
+
+function updateHints() {
+  const sheets = getSheets();
+  document.querySelectorAll('#day-body .rr[data-type="sheet"]').forEach(r => {
+    const id = r.dataset.id;
+    const sh = sheets.find(s => s.id === id);
+    if (!sh) return;
+    const v = Math.max(0, parseInt(r.querySelector('.sinput').value) || 0);
+    r.querySelector('.thint').textContent = '= ' + v * sh.min + '分';
+  });
+}
+
+function updateGameLock() {
+  const ok = allChecksDone();
+  const gr = document.getElementById('game-row');
+  const gi = document.getElementById('i-gm');
+  const gl = document.getElementById('gm-lock');
+  if (!gr) return;
+  if (ok) { gr.classList.remove('game-locked'); gl.classList.add('hidden'); gi.disabled = false; }
+  else { gr.classList.add('game-locked'); gl.classList.remove('hidden'); gi.disabled = true; }
+}
+
+function addGameTime() {
+  const addVal = Math.max(0, parseInt(document.getElementById('i-gm-add').value) || 0);
+  if (addVal <= 0) return;
+  const rec = data.days[selDate];
+  if (!rec) return;
+  rec.gm = (rec.gm || 0) + addVal;
+  save(); render(); updateStatus();
+  document.getElementById('i-gm').value = rec.gm;
+  document.getElementById('i-gm-add').value = '';
+  const earned = calcEarned(), used = calcUsed(), exd = data.exchanged || 0;
+  sendNotify('gameAdd', {
+    child: getActiveChild(), date: selDate, added: addVal,
+    totalGm: rec.gm, rem: earned - used - exd
+  });
+}
+
+function saveDay() {
+  const rec = { checks:{}, sheets:{}, gm:0 };
+  document.querySelectorAll('#day-body .rr[data-type="check"]').forEach(r => {
+    rec.checks[r.dataset.id] = r.querySelector('.toggle').classList.contains('on');
+  });
+  document.querySelectorAll('#day-body .rr[data-type="sheet"]').forEach(r => {
+    rec.sheets[r.dataset.id] = Math.max(0, parseInt(r.querySelector('.sinput').value) || 0);
+  });
+  rec.gm = Math.max(0, parseInt(document.getElementById('i-gm').value) || 0);
+  if (!allChecksDone()) rec.gm = 0;
+  data.days[selDate] = rec;
+  save(); render(); updateStatus(); closeDay();
+  // 自動バックアップ（フォルダ指定があればそこへ書き込み）
+  autoBackup(false);
+  const earned = calcEarned(), used = calcUsed(), exd = data.exchanged || 0;
+  sendNotify('daySave', {
+    child: getActiveChild(), date: selDate, rec,
+    earned, rem: earned - used - exd
+  });
+}
+
+// ========== PASSWORD ==========
+function openPw() {
+  document.getElementById('pw-modal').classList.remove('hidden');
+  document.getElementById('pw-in').value='';
+  document.getElementById('pw-err').classList.add('hidden');
+  document.getElementById('pw-in').focus();
+}
+function closePw() { document.getElementById('pw-modal').classList.add('hidden'); }
+function checkPw() {
+  if(document.getElementById('pw-in').value === settings.password) {
+    closePw(); editing=true; lockAll(false); updateGameLock();
+    document.getElementById('save-btn').classList.remove('hidden');
+    document.getElementById('edit-btn').classList.add('hidden');
+    document.getElementById('lock-banner').classList.add('hidden');
+    document.getElementById('game-add').classList.add('hidden');
+  } else {
+    document.getElementById('pw-err').classList.remove('hidden');
+    document.getElementById('pw-in').value=''; document.getElementById('pw-in').focus();
+  }
+}
+
+// ========== STATUS ==========
+function calcEarned() {
+  let earned = 0;
+  const sheets = getSheets();
+  Object.values(data.days).forEach(r => {
+    if (!r.sheets) return;
+    sheets.forEach(sh => { earned += (r.sheets[sh.id] || 0) * sh.min; });
+  });
+  return earned;
+}
+function calcUsed() {
+  let used = 0;
+  Object.values(data.days).forEach(r => { used += (r.gm || 0); });
+  return used;
+}
+function updateStatus() {
+  const earned = calcEarned(), used = calcUsed();
+  const exd = data.exchanged || 0, rem = earned - used - exd;
+  const exMin = cfgExMin(), exYen = cfgExYen();
+  const exc = Math.floor(rem / exMin) * exYen;
+  document.getElementById('st-earned').textContent = earned + '分';
+  document.getElementById('st-used').textContent = used + '分';
+  document.getElementById('st-remain').textContent = rem + '分';
+  document.getElementById('st-money').textContent = (exc > 0 ? exc : 0) + '円';
+  document.getElementById('ex-btn').classList.toggle('hidden', exc < exYen);
+}
+
+// ========== EXCHANGE ==========
+function openExchange() {
+  const earned=calcEarned(), used=calcUsed();
+  const exd=data.exchanged||0, rem=earned-used-exd;
+  const exMin=cfgExMin(), exYen=cfgExYen();
+  const exc=Math.floor(rem/exMin)*exYen;
+  document.getElementById('ex-rate').textContent=exMin+'分 = '+exYen+'円とこうかんできるよ！';
+  document.getElementById('ex-rem').textContent=rem;
+  document.getElementById('ex-amt').textContent=exc;
+  document.getElementById('ex-tot').textContent=exd;
+  document.getElementById('ex-modal').classList.remove('hidden');
+}
+function closeEx() { document.getElementById('ex-modal').classList.add('hidden'); }
+function doExchange() {
+  const earned=calcEarned(), used=calcUsed();
+  const exd=data.exchanged||0, rem=earned-used-exd;
+  const exMin=cfgExMin(), exYen=cfgExYen();
+  const exc=Math.floor(rem/exMin)*exYen;
+  if(exc>=exYen) {
+    const minUsed = Math.floor(rem/exMin)*exMin;
+    data.exchanged=(data.exchanged||0)+minUsed;
+    save(); updateStatus();
+    const ne=calcEarned(), nu=calcUsed(), nd=data.exchanged||0;
+    sendNotify('exchange', {
+      child:getActiveChild(), minUsed, yenGot:exc,
+      yenTotal: Math.floor((data.exchanged||0) / exMin) * exYen,
+      rem: ne - nu - nd
+    });
+  }
+  closeEx();
+}
+
+// ========== NOTIFY ==========
+// 本番環境では config.local.js で window.GC_NOTIFY_API_URL / window.GC_NOTIFY_TOKEN を定義する
+const NOTIFY_API_URL = (typeof window !== 'undefined' && window.GC_NOTIFY_API_URL) || '';
+const NOTIFY_TOKEN   = (typeof window !== 'undefined' && window.GC_NOTIFY_TOKEN) || '';
+
+function getNotifyConfig() {
+  const def = { enabled:false, email:'', ntfyTopic:'', events:{daySave:true, gameAdd:true, exchange:true} };
+  if (!settings || !settings.notification) return def;
+  const n = settings.notification;
+  return {
+    enabled: !!n.enabled,
+    email: n.email || '',
+    ntfyTopic: n.ntfyTopic || '',
+    events: Object.assign({daySave:true, gameAdd:true, exchange:true}, n.events || {})
+  };
+}
+
+function isNotifyEvent(eventType) {
+  const cfg = getNotifyConfig();
+  if (!cfg.enabled) return false;
+  return cfg.events[eventType] !== false;
+}
+
+function formatNotifyMessage(eventType, p) {
+  const child = p.child || getActiveChild();
+  if (eventType === 'daySave') {
+    const checks = getChecks(), sheets = getSheets();
+    const lines = [`${child}が ${p.date} のきろくをほぞんしました`, ''];
+    lines.push('【必須チェック】');
+    checks.forEach(ck => {
+      const on = p.rec.checks && p.rec.checks[ck.id];
+      lines.push(`  ${on ? '✓' : '✗'} ${ck.name}`);
+    });
+    lines.push('');
+    lines.push('【プリント】');
+    sheets.forEach(sh => {
+      const v = (p.rec.sheets && p.rec.sheets[sh.id]) || 0;
+      lines.push(`  ${sh.name}: ${v}${sh.unit || 'まい'}`);
+    });
+    lines.push('');
+    lines.push(`ゲーム時間: ${p.rec.gm || 0}分`);
+    lines.push('');
+    lines.push(`合計たまった: ${p.earned}分 / のこり: ${p.rem}分`);
+    return { subject:`[がんばり] ${child} ${p.date} のきろく`, body:lines.join('\n') };
+  }
+  if (eventType === 'gameAdd') {
+    return {
+      subject: `[がんばり] ${child} ゲーム時間+${p.added}分`,
+      body: `${child}が ${p.date} にゲーム時間を ${p.added}分 ついかしました\n` +
+            `合計ゲーム時間: ${p.totalGm}分\nのこり時間: ${p.rem}分`
+    };
+  }
+  if (eventType === 'exchange') {
+    return {
+      subject: `[がんばり] ${child} ${p.yenGot}円こうかん`,
+      body: `${child}が時間→お小遣いを交換しました\n` +
+            `こうかん: ${p.minUsed}分 → ${p.yenGot}円\n` +
+            `これまでの累計: ${p.yenTotal}円\nのこり時間: ${p.rem}分`
+    };
+  }
+  return { subject:'[がんばり] 通知', body:'' };
+}
+
+function sendNotify(eventType, payload) {
+  try {
+    if (!isNotifyEvent(eventType)) return;
+    const cfg = getNotifyConfig();
+    const msg = formatNotifyMessage(eventType, payload);
+
+    // ntfy.sh へ Push 通知（JSON publish 方式で日本語件名OK）
+    if (cfg.ntfyTopic) {
+      const topic = cfg.ntfyTopic.trim();
+      if (topic) {
+        fetch('https://ntfy.sh/', {
+          method:'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            topic: topic,
+            title: msg.subject,
+            message: msg.body,
+            tags: ['memo']
+          })
+        }).catch(e => console.warn('ntfy送信失敗', e));
+      }
+    }
+
+    // メール送信（自前API経由）
+    if (cfg.email && NOTIFY_API_URL && NOTIFY_TOKEN) {
+      fetch(NOTIFY_API_URL, {
+        method:'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          type:'ganbari-calendar',
+          token: NOTIFY_TOKEN,
+          hp: '', // honeypot: 人間操作なら常に空
+          to: cfg.email,
+          subject: msg.subject,
+          body: msg.body
+        })
+      }).catch(e => console.warn('メール送信失敗', e));
+    }
+  } catch (e) {
+    console.warn('通知エラー', e);
+  }
+}
+
+// ========== SETTINGS ==========
+let cfgChecks, cfgSheetsArr, cfgChildren, cfgNotification;
+
+function openSettings() {
+  document.getElementById('cfg-pw-modal').classList.remove('hidden');
+  document.getElementById('cfg-pw-in').value='';
+  document.getElementById('cfg-pw-err').classList.add('hidden');
+  document.getElementById('cfg-pw-in').focus();
+}
+function closeCfgPw() { document.getElementById('cfg-pw-modal').classList.add('hidden'); }
+function checkCfgPw() {
+  if(document.getElementById('cfg-pw-in').value === settings.password) {
+    closeCfgPw();
+    cfgChecks = JSON.parse(JSON.stringify(getChecks()));
+    cfgSheetsArr = JSON.parse(JSON.stringify(getSheets()));
+    cfgChildren = getChildren().slice();
+    cfgNotification = JSON.parse(JSON.stringify(getNotifyConfig()));
+    renderCfg();
+    document.getElementById('cfg-modal').classList.remove('hidden');
+  } else {
+    document.getElementById('cfg-pw-err').classList.remove('hidden');
+    document.getElementById('cfg-pw-in').value=''; document.getElementById('cfg-pw-in').focus();
+  }
+}
+function closeCfg() { document.getElementById('cfg-modal').classList.add('hidden'); }
+
+function renderCfg() {
+  let html = '';
+  // Children management
+  html += '<p class="cfg-section">こども管理</p>';
+  cfgChildren.forEach((name, i) => {
+    html += '<div class="child-cfg-row">';
+    html += '<input type="text" class="cfg-name-input" value="'+name+'" data-cfg="child-name" data-idx="'+i+'">';
+    if (cfgChildren.length > 1) html += '<button class="btn-del-item" onclick="delCfgChild('+i+')">×</button>';
+    html += '</div>';
+  });
+  html += '<button class="btn-add-item" onclick="addCfgChild()">＋ こどもついか</button>';
+
+  html += '<hr>';
+  // Check items
+  html += '<p class="cfg-section">必須チェック項目（ゲーム解放の条件）</p>';
+  cfgChecks.forEach((ck, i) => {
+    html += '<div class="cfg-row">';
+    html += '<input type="text" class="cfg-name-input" value="'+ck.name+'" data-cfg="check-name" data-idx="'+i+'">';
+    if (cfgChecks.length > 1) html += '<button class="btn-del-item" onclick="delCfgCheck('+i+')">×</button>';
+    html += '</div>';
+  });
+  html += '<button class="btn-add-item" onclick="addCfgCheck()">＋ 必須項目ついか</button>';
+
+  html += '<hr>';
+  // Sheet items
+  html += '<p class="cfg-section">プリント項目（時間がたまる）</p>';
+  cfgSheetsArr.forEach((sh, i) => {
+    const curUnit = sh.unit || 'まい';
+    html += '<div class="cfg-row" style="flex-wrap:wrap;gap:6px">';
+    html += '<input type="text" class="cfg-name-input" value="'+sh.name+'" data-cfg="sheet-name" data-idx="'+i+'">';
+    html += '<input type="number" class="cfg-input" value="'+sh.min+'" min="1" data-cfg="sheet-min" data-idx="'+i+'" style="width:90px">';
+    html += '<span class="cfg-unit">分/</span>';
+    html += '<select class="cfg-unit-select" data-cfg="sheet-unit" data-idx="'+i+'">';
+    UNIT_OPTIONS.forEach(u => {
+      html += '<option value="'+u+'"'+(u===curUnit?' selected':'')+'>'+u+'</option>';
+    });
+    html += '</select>';
+    if (cfgSheetsArr.length > 1) html += '<button class="btn-del-item" onclick="delCfgSheet('+i+')">×</button>';
+    html += '</div>';
+  });
+  html += '<button class="btn-add-item" onclick="addCfgSheet()">＋ プリント項目ついか</button>';
+
+  html += '<hr>';
+  html += '<p class="cfg-section">こうかんレート</p>';
+  html += '<div class="cfg-row"><span class="cfg-label">こうかん</span>';
+  html += '<input type="number" class="cfg-input" id="cfg-ex-min" min="1" value="'+cfgExMin()+'" style="width:120px">';
+  html += '<span class="cfg-unit">分 = </span>';
+  html += '<input type="number" class="cfg-input" id="cfg-ex-yen" min="1" value="'+cfgExYen()+'" style="width:120px">';
+  html += '<span class="cfg-unit">円</span></div>';
+
+  html += '<hr>';
+  html += '<p class="cfg-section">パスワード変更</p>';
+  html += '<div class="cfg-row"><span class="cfg-label">あたらしいパスワード</span>';
+  html += '<input type="text" class="cfg-input" id="cfg-new-pw" maxlength="4" inputmode="numeric" placeholder="4けた" style="letter-spacing:4px;width:100px"></div>';
+
+  html += '<hr>';
+  html += '<p class="cfg-section">通知せってい</p>';
+  html += '<p style="font-size:12px;color:#888;margin-bottom:8px;line-height:1.5;">きろくをほぞんしたとき、おうちの人にメールやスマホ通知でおしらせするよ。<br>メールアドレスかntfyトピック名どちらか1つだけ入れてもOK。</p>';
+  const nf = cfgNotification || getNotifyConfig();
+  html += '<div class="cfg-row"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;">';
+  html += '<input type="checkbox" id="cfg-nf-enabled" style="width:18px;height:18px;"' + (nf.enabled ? ' checked' : '') + '>';
+  html += '<span>通知をつかう</span></label></div>';
+  html += '<div class="cfg-row" style="flex-direction:column;align-items:stretch;gap:4px;margin-bottom:8px;">';
+  html += '<span class="cfg-label" style="text-align:left;">メールアドレス</span>';
+  html += '<input type="email" class="cfg-input" id="cfg-nf-email" value="' + (nf.email || '').replace(/"/g, '&quot;') + '" placeholder="parent@example.com" style="width:100%;">';
+  html += '<span style="font-size:11px;color:#888;">からっぽならメールは送らないよ</span>';
+  html += '</div>';
+  html += '<div class="cfg-row" style="flex-direction:column;align-items:stretch;gap:4px;margin-bottom:8px;">';
+  html += '<span class="cfg-label" style="text-align:left;">ntfy.sh トピック名（スマホ通知）</span>';
+  html += '<input type="text" class="cfg-input" id="cfg-nf-ntfy" value="' + (nf.ntfyTopic || '').replace(/"/g, '&quot;') + '" placeholder="ganbari-azusa-7k3p9q" style="width:100%;">';
+  html += '<span style="font-size:11px;color:#888;line-height:1.5;">スマホに <a href="https://ntfy.sh/" target="_blank" rel="noopener" style="color:#6C63FF;">ntfy.sh</a> アプリをいれて、すきな合言葉を「Subscribe」してね。からっぽならスマホ通知なし。</span>';
+  html += '</div>';
+  html += '<div class="cfg-row" style="flex-direction:column;align-items:stretch;gap:4px;">';
+  html += '<span class="cfg-label" style="text-align:left;">通知するイベント</span>';
+  html += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cfg-nf-ev-save"' + (nf.events.daySave !== false ? ' checked' : '') + '><span>毎日のきろくをほぞんしたとき</span></label>';
+  html += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cfg-nf-ev-gm"' + (nf.events.gameAdd !== false ? ' checked' : '') + '><span>ゲーム時間をついかしたとき</span></label>';
+  html += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cfg-nf-ev-ex"' + (nf.events.exchange !== false ? ' checked' : '') + '><span>お小遣いに交換したとき</span></label>';
+  html += '</div>';
+
+  html += '<hr>';
+  html += '<p class="cfg-section">じどうバックアップ</p>';
+  html += '<p style="font-size:12px;color:#888;margin-bottom:8px;line-height:1.5;">「ほぞん」ボタンをおすたびに、えらんだフォルダへ1日1回じどうでバックアップするよ。<br>ブラウザのリレキをけしてもデータがのこせるからあんしん！</p>';
+  html += '<div id="cfg-backup-dir-status" style="font-size:13px;padding:8px 12px;background:#F5F7FA;border-radius:8px;margin-bottom:8px;"></div>';
+  html += '<div class="cfg-row" style="gap:8px;flex-direction:column;align-items:stretch;">';
+  html += '<button type="button" class="btn-add-item" onclick="pickBackupDir()" style="width:100%;">';
+  html += (backupDirName ? '📁 フォルダをかえる' : '📁 フォルダをえらぶ');
+  html += '</button>';
+  if (backupDirName) {
+    html += '<button type="button" class="btn-del-item" onclick="clearBackupDir().then(renderCfg)" style="width:100%;height:auto;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;">じどうバックアップやめる</button>';
+  }
+  html += '</div>';
+
+  document.getElementById('cfg-body').innerHTML = html;
+  updateBackupDirDisplay();
+}
+
+function readCfgFromDom() {
+  document.querySelectorAll('[data-cfg="child-name"]').forEach(el => {
+    cfgChildren[parseInt(el.dataset.idx)] = el.value.trim() || 'こども';
+  });
+  document.querySelectorAll('[data-cfg="check-name"]').forEach(el => {
+    cfgChecks[parseInt(el.dataset.idx)].name = el.value.trim() || '項目';
+  });
+  document.querySelectorAll('[data-cfg="sheet-name"]').forEach(el => {
+    cfgSheetsArr[parseInt(el.dataset.idx)].name = el.value.trim() || '項目';
+  });
+  document.querySelectorAll('[data-cfg="sheet-min"]').forEach(el => {
+    cfgSheetsArr[parseInt(el.dataset.idx)].min = Math.max(1, parseInt(el.value) || 10);
+  });
+  document.querySelectorAll('[data-cfg="sheet-unit"]').forEach(el => {
+    cfgSheetsArr[parseInt(el.dataset.idx)].unit = el.value;
+  });
+  const nfEl = document.getElementById('cfg-nf-enabled');
+  if (nfEl) {
+    cfgNotification = {
+      enabled: nfEl.checked,
+      email: document.getElementById('cfg-nf-email').value.trim(),
+      ntfyTopic: document.getElementById('cfg-nf-ntfy').value.trim(),
+      events: {
+        daySave: document.getElementById('cfg-nf-ev-save').checked,
+        gameAdd: document.getElementById('cfg-nf-ev-gm').checked,
+        exchange: document.getElementById('cfg-nf-ev-ex').checked
+      }
+    };
+  }
+}
+
+function addCfgChild() {
+  readCfgFromDom();
+  cfgChildren.push('こども' + (cfgChildren.length + 1));
+  renderCfg();
+}
+function delCfgChild(i) {
+  if (cfgChildren.length <= 1) return;
+  readCfgFromDom();
+  const removedName = cfgChildren[i];
+  cfgChildren.splice(i, 1);
+  // Mark data for deletion on save
+  if (!window._cfgDeletedChildren) window._cfgDeletedChildren = [];
+  window._cfgDeletedChildren.push(removedName);
+  renderCfg();
+}
+
+function addCfgCheck() {
+  readCfgFromDom();
+  const id = 'c' + Date.now();
+  cfgChecks.push({id, name:'新しい項目'});
+  renderCfg();
+}
+function delCfgCheck(i) {
+  readCfgFromDom();
+  cfgChecks.splice(i, 1);
+  renderCfg();
+}
+function addCfgSheet() {
+  readCfgFromDom();
+  const id = 's' + Date.now();
+  cfgSheetsArr.push({id, name:'新しい科目', min:10, unit:'まい'});
+  renderCfg();
+}
+function delCfgSheet(i) {
+  readCfgFromDom();
+  cfgSheetsArr.splice(i, 1);
+  renderCfg();
+}
+
+function saveCfg() {
+  readCfgFromDom();
+
+  // Handle child renames (move data keys)
+  const oldChildren = getChildren();
+  cfgChildren.forEach((newName, i) => {
+    if (i < oldChildren.length && oldChildren[i] !== newName) {
+      const oldData = localStorage.getItem('gc-data-' + oldChildren[i]);
+      if (oldData) {
+        localStorage.setItem('gc-data-' + newName, oldData);
+        localStorage.removeItem('gc-data-' + oldChildren[i]);
+      }
+    }
+  });
+
+  // Handle deleted children data
+  if (window._cfgDeletedChildren) {
+    window._cfgDeletedChildren.forEach(name => {
+      localStorage.removeItem('gc-data-' + name);
+    });
+    window._cfgDeletedChildren = [];
+  }
+
+  settings.children = cfgChildren;
+  settings.name = cfgChildren[0];
+  settings.checks = cfgChecks;
+  settings.sheets = cfgSheetsArr;
+  settings.exMin = Math.max(1, parseInt(document.getElementById('cfg-ex-min').value) || 1000);
+  settings.exYen = Math.max(1, parseInt(document.getElementById('cfg-ex-yen').value) || 1000);
+  const newPw = document.getElementById('cfg-new-pw').value.trim();
+  if (newPw && /^\d{4}$/.test(newPw)) settings.password = newPw;
+  if (cfgNotification) settings.notification = cfgNotification;
+  localStorage.setItem('gc-settings', JSON.stringify(settings));
+
+  // Adjust active child if out of bounds
+  if (activeChildIdx >= cfgChildren.length) activeChildIdx = 0;
+  loadChildData();
+  renderChildTabs();
+  updateTitle();
+  render(); updateStatus(); closeCfg();
+}
+
+function save() { localStorage.setItem(dataKey(), JSON.stringify(data)); }
+
+// ========== BACKUP EXPORT/IMPORT ==========
+function buildBackupJson() {
+  const allData = {};
+  getChildren().forEach(name => {
+    const d = JSON.parse(localStorage.getItem('gc-data-' + name) || 'null');
+    if (d) allData[name] = d;
+  });
+  const backup = {
+    version: 2,
+    exportDate: new Date().toISOString(),
+    settings: settings,
+    childrenData: allData
+  };
+  return JSON.stringify(backup, null, 2);
+}
+
+function backupFileName() {
+  const dateStr = new Date().toISOString().slice(0,10);
+  return 'がんばりカレンダー_' + dateStr + '.json';
+}
+
+function exportData() {
+  // 手動バックアップ（フォルダ指定があればそこへ、なければダウンロード）
+  if (backupDirHandle) {
+    autoBackup(true);
+    return;
+  }
+  downloadBackup();
+}
+
+function downloadBackup() {
+  const json = buildBackupJson();
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = backupFileName();
+  a.click();
+  URL.revokeObjectURL(url);
+  localStorage.setItem('gc-last-backup', Date.now().toString());
+  checkBackupReminder();
+}
+
+// ========== AUTO BACKUP (File System Access API) ==========
+let backupDirHandle = null;
+let backupDirName = '';
+
+function isFSASupported() {
+  return 'showDirectoryPicker' in window;
+}
+
+// IndexedDB でフォルダハンドルを永続化
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('gc-fs', 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore('handles');
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e);
+  });
+}
+async function idbSetHandle(handle) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('handles', 'readwrite');
+    tx.objectStore('handles').put(handle, 'backupDir');
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+async function idbGetHandle() {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('handles', 'readonly');
+    const req = tx.objectStore('handles').get('backupDir');
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = e => reject(e);
+  });
+}
+async function idbClearHandle() {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('handles', 'readwrite');
+    tx.objectStore('handles').delete('backupDir');
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
+async function pickBackupDir() {
+  if (!isFSASupported()) {
+    alert('このブラウザはフォルダ指定にたいおうしてないよ。\n（Chrome / Edge / Arc などをつかってね）\n\n今までどおり、ダウンロードフォルダにほぞんされるよ。');
+    return;
+  }
+  try {
+    const handle = await window.showDirectoryPicker({
+      id: 'gc-backup',
+      mode: 'readwrite',
+      startIn: 'documents'
+    });
+    // 書き込み権限を確認
+    const perm = await handle.requestPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') {
+      alert('書きこみのきょかが必要だよ');
+      return;
+    }
+    backupDirHandle = handle;
+    backupDirName = handle.name;
+    await idbSetHandle(handle);
+    localStorage.setItem('gc-backup-dir-name', handle.name);
+    updateBackupDirDisplay();
+    alert('「' + handle.name + '」にじどうバックアップするよ！');
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error(err);
+      alert('フォルダがえらべなかったよ');
+    }
+  }
+}
+
+async function clearBackupDir() {
+  if (!confirm('じどうバックアップをやめる？\n（バックアップさきフォルダのきろくをけします）')) return;
+  backupDirHandle = null;
+  backupDirName = '';
+  await idbClearHandle();
+  localStorage.removeItem('gc-backup-dir-name');
+  updateBackupDirDisplay();
+}
+
+async function loadBackupDirHandle() {
+  if (!isFSASupported()) return;
+  try {
+    const handle = await idbGetHandle();
+    if (!handle) return;
+    // 権限を確認（必要なら再取得）
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm === 'granted') {
+      backupDirHandle = handle;
+      backupDirName = handle.name;
+    } else {
+      // 権限切れ。次回保存時に再要求
+      backupDirHandle = handle;
+      backupDirName = handle.name;
+    }
+  } catch (err) {
+    console.warn('バックアップフォルダの復元に失敗:', err);
+  }
+}
+
+async function autoBackup(showAlert) {
+  if (!backupDirHandle) {
+    if (showAlert) downloadBackup();
+    return;
+  }
+  try {
+    // 権限チェック（書き込み時に再要求）
+    let perm = await backupDirHandle.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') {
+      perm = await backupDirHandle.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') {
+        if (showAlert) alert('フォルダの権限がきれてるよ。せっていから選びなおしてね。');
+        return;
+      }
+    }
+    const fileHandle = await backupDirHandle.getFileHandle(backupFileName(), { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(buildBackupJson());
+    await writable.close();
+    localStorage.setItem('gc-last-backup', Date.now().toString());
+    checkBackupReminder();
+    if (showAlert) {
+      flashStatus('「' + backupDirName + '」にバックアップしたよ✓');
+    } else {
+      flashStatus('バックアップずみ✓');
+    }
+  } catch (err) {
+    console.error('自動バックアップ失敗:', err);
+    if (showAlert) {
+      alert('じどうバックアップに失敗したよ。\nダウンロードでほぞんするね。');
+      downloadBackup();
+    }
+  }
+}
+
+function flashStatus(msg) {
+  let el = document.getElementById('backup-flash');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'backup-flash';
+    el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#4CAF50;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:opacity .3s;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+}
+
+function updateBackupDirDisplay() {
+  const el = document.getElementById('cfg-backup-dir-status');
+  if (!el) return;
+  if (backupDirName) {
+    el.innerHTML = '<span style="color:#4CAF50;font-weight:600;">✓ ' + backupDirName + '</span> にじどうバックアップ中';
+  } else if (isFSASupported()) {
+    el.innerHTML = '<span style="color:#888;">フォルダみしてい（ダウンロードフォルダにほぞんされるよ）</span>';
+  } else {
+    el.innerHTML = '<span style="color:#888;">このブラウザは未対応（Chrome/Edgeをつかってね）</span>';
+  }
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.settings) {
+        alert('このファイルはバックアップデータではないみたい');
+        return;
+      }
+      if (!confirm('バックアップデータをふっかつさせるよ。いまのデータは上書きされるけど、いい？')) return;
+      settings = backup.settings;
+      localStorage.setItem('gc-settings', JSON.stringify(settings));
+      // Restore all children's data
+      if (backup.childrenData) {
+        Object.keys(backup.childrenData).forEach(name => {
+          localStorage.setItem('gc-data-' + name, JSON.stringify(backup.childrenData[name]));
+        });
+      } else if (backup.data) {
+        // v1 format compatibility
+        localStorage.setItem('gc-data-' + settings.name, JSON.stringify(backup.data));
+      }
+      localStorage.setItem('gc-last-backup', Date.now().toString());
+      activeChildIdx = 0;
+      loadChildData();
+      renderChildTabs();
+      updateTitle();
+      render();
+      updateStatus();
+      checkBackupReminder();
+      alert('ふっかつできたよ！');
+    } catch (err) {
+      alert('ファイルが読みこめなかったよ');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function checkBackupReminder() {
+  const last = parseInt(localStorage.getItem('gc-last-backup') || '0');
+  const el = document.getElementById('backup-reminder');
+  if (!last) {
+    document.getElementById('backup-days').textContent = '—';
+    el.classList.remove('hidden');
+    return;
+  }
+  const days = Math.floor((Date.now() - last) / (1000 * 60 * 60 * 24));
+  if (days >= 7) {
+    document.getElementById('backup-days').textContent = days;
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+  }
+}
+
+function dismissReminder() {
+  document.getElementById('backup-reminder').classList.add('hidden');
+}
+
+// Check backup on start
+if (settings) checkBackupReminder();
+// 自動バックアップ用フォルダを復元
+loadBackupDirHandle();
+</script>
+<script>
+// ========== Service Worker 登録（PWA: オフライン対応・ホーム画面追加） ==========
+// file:// で開いた時はスキップ（http(s) でないと SW は登録できない）
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      console.warn('Service Worker 登録失敗', err);
+    });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# 機密設定（実SMTP情報・実トークン）
+api/config.php
+config.local.js
+
+# 停止スイッチ（運用ファイル）
+api/kill-switch
+
+# レート制限の状態ストア
+api/data/rate-limit/
+api/data/*.json
+
+# 開発系
+.DS_Store
+*.log
+node_modules/
+.vscode/
+.idea/
+
+# composer は vendor/ をリポに含める方針なので除外しない
+# （Xserverに直アップする運用のため）

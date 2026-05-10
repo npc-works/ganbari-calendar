@@ -1,0 +1,13 @@
+/**
+ * 本番環境専用の通知設定（GitHubには含まれない）
+ *
+ * 使い方:
+ *   1. このファイルを config.local.js にコピー
+ *   2. 下記の値を実値に書き換える
+ *   3. index.html と同じ階層に置く
+ *
+ * GC_NOTIFY_TOKEN は api/config.php の shared_token と必ず同じ値にすること。
+ */
+
+window.GC_NOTIFY_API_URL = 'https://n-pc.jp/ganbari-calendar/api/notify.php';
+window.GC_NOTIFY_TOKEN   = 'CHANGE_ME_TO_RANDOM_HEX_STRING';

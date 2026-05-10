@@ -1,0 +1,44 @@
+<?php
+/**
+ * notify.php の設定ファイル（テンプレート）
+ *
+ * 本番運用時はこれを config.php にコピーして実値を入れる。
+ * config.php は .gitignore で除外されているのでGitHubには載らない。
+ */
+
+return [
+    // 受け付けるOrigin（HTMLが置かれているドメイン。末尾スラッシュなし）
+    'allowed_origin' => 'https://n-pc.jp',
+
+    // 共有秘密トークン（HTMLにも同じ値を埋め込む。32文字以上のランダム英数字推奨）
+    // 生成例: php -r "echo bin2hex(random_bytes(24)) . PHP_EOL;"
+    'shared_token' => 'CHANGE_ME_TO_RANDOM_HEX_STRING',
+
+    // SMTP送信設定（Xserverのメールアカウント）
+    'smtp' => [
+        'host'      => 'svXXXX.xserver.jp', // wizardaz8 のホスト名（コンパネで確認）
+        'port'      => 465,
+        'user'      => 'ganbari-calendar@n-pc.jp',
+        'pass'      => 'CHANGE_ME',
+        'from'      => 'ganbari-calendar@n-pc.jp',
+        'from_name' => 'がんばりカレンダー',
+    ],
+
+    // 宛先ドメイン許可リスト（空配列なら制限なし）
+    // 主要メアド以外をブロックしたい場合に有効化
+    'allowed_domains' => [
+        // 'gmail.com',
+        // 'icloud.com',
+        // 'me.com',
+        // 'mac.com',
+        // 'yahoo.co.jp',
+        // 'docomo.ne.jp',
+        // 'ezweb.ne.jp',
+        // 'softbank.ne.jp',
+        // 'i.softbank.jp',
+        // 'outlook.jp',
+        // 'outlook.com',
+        // 'hotmail.com',
+        // 'live.jp',
+    ],
+];
