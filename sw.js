@@ -2,7 +2,7 @@
 // オフラインキャッシュ + バージョン管理
 //
 // バージョンを変更したら旧キャッシュは自動で削除される
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = 'ganbari-calendar-' + CACHE_VERSION;
 const ASSETS = [
   './',
